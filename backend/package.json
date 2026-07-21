@@ -1,0 +1,43 @@
+{
+  "name": "ai-travel-planner",
+  "version": "1.0.0",
+  "description": "AI assisted travel planner",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node -r dotenv/config src/scripts/seedLocationMetadata.js",
+    "seed-hotels": "node src/scripts/seedHotelFixtures.js",
+    "test:evals": "jest tests/evals/travel-evals.test.js --runInBand --detectOpenHandles"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@agent-infra/duckduckgo-search": "^0.0.1",
+    "@duffel/api": "^4.28.0",
+    "@google/genai": "^2.12.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "duck-duck-scrape": "^2.2.7",
+    "express": "^4.19.2",
+    "express-validator": "^7.2.0",
+    "groq-sdk": "^1.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.1",
+    "morgan": "^1.10.0",
+    "multer": "^2.1.1",
+    "node-cron": "^4.5.0",
+    "rss-parser": "^3.13.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nock": "^14.0.16",
+    "nodemon": "^3.1.4"
+  }
+}

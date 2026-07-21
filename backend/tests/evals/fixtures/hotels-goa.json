@@ -1,0 +1,16 @@
+[
+    {
+      "id": "HTL-701",
+      "name": "Taj Exotica Resort & Spa",
+      "pricePerNightUSD": 350,
+      "rating": 5,
+      "amenities": ["beach front", "pool"]
+    },
+    {
+      "id": "HTL-302",
+      "name": "Zostel Goa",
+      "pricePerNightUSD": 30,
+      "rating": 4,
+      "amenities": ["social vibe", "wifi"]
+    }
+  ]

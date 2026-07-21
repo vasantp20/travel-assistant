@@ -1,0 +1,18 @@
+[
+    {
+      "id": "FL-101",
+      "airline": "IndiGo",
+      "flightNumber": "6E-521",
+      "priceUSD": 120,
+      "departure": "08:00 AM",
+      "arrival": "09:15 AM"
+    },
+    {
+      "id": "FL-102",
+      "airline": "Air India",
+      "flightNumber": "AI-804",
+      "priceUSD": 280,
+      "departure": "15:00 PM",
+      "arrival": "16:20 PM"
+    }
+  ]

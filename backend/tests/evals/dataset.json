@@ -1,0 +1,54 @@
+[
+    {
+      "id": "TC-001",
+      "name": "Standard Happy Path - BLR to GOI",
+      "input": {
+        "origin": "Bengaluru",
+        "destination": "Goa",
+        "durationDays": 5,
+        "maxBudgetUSD": 1500,
+        "preferences": ["beach front", "seafood"]
+      },
+      "expectedConstraints": {
+        "mustContainFlights": true,
+        "mustContainHotels": true,
+        "maxBudget": 1500,
+        "forbiddenActivities": ["sunset over East Coast beach"]
+      }
+    },
+    {
+      "id": "TC-002",
+      "name": "Strict Budget Constraint",
+      "input": {
+        "origin": "Bengaluru",
+        "destination": "Goa",
+        "durationDays": 3,
+        "maxBudgetUSD": 400,
+        "preferences": ["budget hostel"]
+      },
+      "expectedConstraints": {
+        "mustContainFlights": true,
+        "mustContainHotels": true,
+        "maxBudget": 400,
+        "forbiddenActivities": []
+      }
+    },
+    {
+      "id": "TC-003",
+      "name": "Geographic Edge Case - Port Blair Evening Flight",
+      "input": {
+        "origin": "Bengaluru",
+        "destination": "Port Blair",
+        "durationDays": 4,
+        "maxBudgetUSD": 2000,
+        "preferences": ["Havelock Island transfer"],
+        "flightArrivalTime": "15:30"
+      },
+      "expectedConstraints": {
+        "mustContainFlights": true,
+        "mustContainHotels": true,
+        "maxBudget": 2000,
+        "forbiddenOnDay1": ["ferry to Havelock Island"]
+      }
+    }
+  ]
