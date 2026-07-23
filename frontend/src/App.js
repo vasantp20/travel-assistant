@@ -3,14 +3,7 @@ import './App.css';
 
 import AgenticDashboard from './components/Agentic/Dashboard'
 
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  BrowserRouter,
-  Navigate
-} from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import React from 'react';
 
 

@@ -48,6 +48,7 @@ async function streamGroqToSSE(messages, res, { tools = null, tool_choice = 'aut
     model: GROQ_MODEL,
     messages,
     stream: true,
+    max_tokens: 4096,
   };
 
   if (tools && tools.length > 0) {

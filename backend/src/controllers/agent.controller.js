@@ -1,37 +1,6 @@
-const { Readable } = require('stream');
-const { Groq } = require('groq-sdk');
 const { coordinateMultiAgentPlan } = require('../orchestrator');
-const mongoose = require('mongoose');
 
 const AGENT_PROVIDER = (process.env.AGENT_PROVIDER || 'groq').toLowerCase();
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:20b';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
-
-let groq;
-function getGroq() {
-  if (!groq) groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-  return groq;
-}
-
-// Simple internal logger helper for consistent formatting
-const logger = {
-  info: (msg, meta = '') => console.log(`[${new Date().toISOString()}] [INFO] ${msg}`, meta ? JSON.stringify(meta) : ''),
-  warn: (msg, meta = '') => console.warn(`[${new Date().toISOString()}] [WARN] ⚠️ ${msg}`, meta ? JSON.stringify(meta) : ''),
-  error: (msg, err = '') => console.error(`[${new Date().toISOString()}] [ERROR] ❌ ${msg}`, err.stack || err || '')
-};
-
-
-function initSSE(res) {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-}
-
-function writeSSE(res, event, data) {
-  res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-}
 
 exports.agentHealth = async (req, res, next) => {
   res.json({ status: 'ok', provider: AGENT_PROVIDER, timestamp: new Date().toISOString() });
