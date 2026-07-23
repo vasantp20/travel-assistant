@@ -3,7 +3,7 @@ const { sourceFlightsViaDuffel } = require("./services/flightSearch");
 const { searchHotels } = require("./services/hotelServices");
 
 
-const { verifyAvailability } = require('./services/itineraryVerificationService');
+const { verifyAvailability, verifySynthesizedItinerary } = require('./services/itineraryVerificationService');
 const { synthesizeFinalItinerary } = require('./services/itinerarySynthesisService');
 
 exports.coordinateMultiAgentPlan = async (travelData, res) => {
@@ -62,6 +62,48 @@ exports.coordinateMultiAgentPlan = async (travelData, res) => {
       availabilityIssues: verification.issues,
     });
 
+    // STEP E: Validate the synthesized plan timeline and objects to verify correctness/accuracy
+    sendEvent({ status: 'VALIDATING_SYNTHESIS', message: 'Validating final itinerary details...' });
+
+    const synthesisVerification = verifySynthesizedItinerary({
+      travelData,
+      finalItinerary,
+      flightResults,
+      hotelResults,
+    });
+
+    if (!synthesisVerification.ok) {
+      console.warn('[coordinateMultiAgentPlan] Synthesis validation failed. Applying self-healing...', synthesisVerification.issues);
+      
+      // Proactive patching (self-healing): Overwrite LLM's selectedFlight/selectedHotel details with real ones if matched
+      if (finalItinerary.selectedFlight) {
+        const flights = flightResults?.flights ?? [];
+        const realFlight = flights.find(f => f.id === finalItinerary.selectedFlight.id || 
+          (f.flightNumber === finalItinerary.selectedFlight.flightNumber && f.departureTime === finalItinerary.selectedFlight.departureTime));
+        if (realFlight) {
+          finalItinerary.selectedFlight = realFlight; // Self-heal: use the exact real flight data
+        }
+      }
+
+      if (finalItinerary.selectedHotel) {
+        const hotels = hotelResults ?? [];
+        const realHotel = hotels.find(h => h.id === finalItinerary.selectedHotel.id || h.name === finalItinerary.selectedHotel.name);
+        if (realHotel) {
+          finalItinerary.selectedHotel = realHotel; // Self-heal: use the exact real hotel data
+        }
+      }
+
+      // Re-run validation after self-healing to see if it fixed the critical issues
+      const finalCheck = verifySynthesizedItinerary({
+        travelData,
+        finalItinerary,
+        flightResults,
+        hotelResults,
+      });
+      synthesisVerification.issues = finalCheck.issues;
+      synthesisVerification.ok = finalCheck.ok;
+    }
+
     sendEvent({
       status: 'COMPLETE',
       message: 'Itinerary ready.',
@@ -70,6 +112,7 @@ exports.coordinateMultiAgentPlan = async (travelData, res) => {
         flights: flightResults.flights,
         hotels: hotelResults,
         availabilityIssues: verification.issues, // empty array if all good, non-empty if user acknowledged and proceeded anyway
+        synthesisIssues: synthesisVerification.issues, // empty array if all good or successfully self-healed, non-empty if persistent issues
       },
     });
   } catch (error) {
