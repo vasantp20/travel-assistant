@@ -1,73 +1,156 @@
-# Wealth Ledger: Autonomous Agentic Expense Tracker
+# AI Travel Planner: Multi-Agent Itinerary & Travel Planner
 
-A full-stack, Autonomous Financial Agent that intercepts natural language inputs, extracts structured financial data, executes deterministic database operations via tool-calling, and streams conversational updates back to a React PWA in real time.
-
-Built **without** heavy AI orchestration wrappers (like LangChain) to maintain absolute control over memory management, protocol layers, and network latency.
+A full-stack, AI-powered travel assistant that creates detailed, day-by-day travel itineraries. The system integrates natural language processing via LLMs, fetches real-time flight options via Duffel, retrieves/generates hotel recommendations based on MongoDB fixtures, and streams progress updates using Server-Sent Events (SSE).
 
 ---
 
-## ⚡ Key Architectural Highlights
+## ⚡ Key Architectural Features
 
-* **Custom Server-Sent Events (SSE) Streaming Engine:** Bypasses standard blocking HTTP loops to pipe live token streams from the cloud inference layer down to the client layout, character-by-character.
-* **Stateful Tool-Calling Loop:** Implements an alternating multi-step message loop with MongoDB. Captures conversational queries, generates transient assistant `tool_calls` instructions, executes local Mongoose database tasks, injects structural results back to the context window, and streams final synthesized explanations.
-* **Deterministic Categorization Rules:** Guided by strict system instructions to map semantic concepts (e.g., "Wheat", "Milk") to existing category ObjectIDs in MongoDB to completely eliminate duplicate categorization anomalies.
-* **Authenticated Streaming Service Layer:** Native browser `EventSource` webhooks forbid custom HTTP headers. This architecture extends standard `fetch` using the **Streams API (`ReadableStream`)** and `TextDecoder` to handle robust JWT authorization headers during data stream delivery.
-* **Immutability-Driven React State Updates:** Avoids common UI freezing and token-stutter bugs by enforcing deep copies during chunk aggregation, allowing smooth 60fps rendering on low-power mobile devices.
-
----
-
-## 🛠️ The Production Tech Stack
-
-* **Frontend:** React.js, Progressive Web App (PWA) Configuration, Web Streams API
-* **Backend:** Node.js, Express.js, Groq Cloud SDK, Server-Sent Events Protocol
-* **Database:** MongoDB Atlas, Mongoose ODM
-* **Models:** `llama-3.3-70b-versatile` / `openai/gpt-oss-20b`
+* **Multi-Agent Orchestration:** Coordinates different sub-tasks (itinerary drafting, flight search, hotel verification, and synthesis) into a coherent workflow.
+* **Server-Sent Events (SSE) Streaming:** Pipes real-time generation states (e.g. `PLANNING_ITINERARY`, `SOURCING_TRAVEL_DATA`, `COMPLETE`) and raw content tokens directly to the client.
+* **Dynamic Location Metadata & Constraints:** Enforces regional geographical rules and transit constraints loaded dynamically from MongoDB (e.g. West Coast sunset rules, local transport guidelines, airport distances).
+* **Duffel Flight API Integration:** Sources real-time flight offers for domestic and international sectors, converting prices to INR and selecting preferred cabin classes. Falls back to a simulated provider if no API key is present.
+* **JIT Hotel Fixture Generation:** Seeds destination-specific fictional hotels dynamically using LLM completions, avoiding scrapping of live hotel data.
 
 ---
 
 ## 📂 Repository Structure
 
 ```text
-personal-assistant-AI/
+ai-travel-planner/
 │
-├── backend/            # Express Server, Groq SDK Orchestration, Mongoose Models
-│   ├── models/         # Expense, Category, and stateful Message schemas
-│   ├── controllers/    # Central router /talk handling state orchestration
-│   ├── package.json
-│   └── .env.example
-│
-├── frontend/           # React Mobile PWA Core
+├── backend/            # Express Server & Agent Orchestration
 │   ├── src/
-│   │   ├── components/ # AgenticDashboard chat UI, real-time status banners
-│   │   └── services/   # MainServices wrapper handling ReadableStream decoding
-│   ├── package.json
-│   └── .env.example
+│   │   ├── agent/      # Itinerary generation agent (Groq SDK)
+│   │   ├── models/     # Mongoose Schemas (User, LocationMetadata, HotelModel, RefreshToken)
+│   │   ├── routes/     # Auth and Agent API endpoints
+│   │   ├── services/   # Flight search (Duffel), Hotel search, and Itinerary synthesis
+│   │   ├── scripts/    # Database seeding scripts for location metadata & hotels
+│   │   └── utils/      # SSE and LLM helpers
+│   ├── tests/          # Integration & evaluation test suite
+│   ├── .env.example    # Backend environment template
+│   └── package.json
 │
-└── README.md           # Project Documentation Storefront
+└── frontend/           # React Web Application
+    ├── src/
+    │   ├── components/ # AgenticDashboard UI & state aggregation
+    │   ├── services/   # MainServices wrapper handling ReadableStream decoding
+    │   └── AppConfig.js# Frontend base URL configuration
+    └── package.json
+```
 
+---
 
-[User Input] ──► PWA Interface (Sends Authenticated POST request via Streams API)
-                     │
-                     ▼
-[Express Server] ──► Checks User Identity ──► Fetches Chronological Message History from DB
-                     │
-                     ▼
-[Groq Inference] ──► Evaluates user intent against dynamic financial Category Blueprints
-                     │
-         ┌───────────┴───────────┐
-         ▼ (Intent Matches Tool)  ▼ (Basic Conversational Prompt)
-   [Emits tool_calls Object]    [Streams Plain Text Tokens]
-         │                               │
-         ▼                               ▼
-   [Executes Local Code]        [Appends to React UI State]
-   (e.g. logExpense into DB)             │
-         │                               │
-         ▼                               │
-   [Injects Execution Outcome]           │
-         │                               │
-         ▼                               │
-   [Generates Final Summary]             │
-         │                               │
-         └───────────────┬───────────────┘
-                         ▼
-             [Commits complete transaction log to MongoDB]
+## 🚀 Getting Started
+
+Follow the steps below to setup and run the application on your local machine.
+
+### Prerequisites
+* **Node.js** (v20.0.0 or higher recommended)
+* **npm** (comes with Node.js)
+* **MongoDB** (Local instance or MongoDB Atlas cluster)
+
+---
+
+### 1. Backend Setup
+
+1. **Navigate to the backend directory:**
+   ```bash
+   cd backend
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env` file by copying the template:
+   ```bash
+   cp .env.example .env
+   ```
+   Open the `.env` file and populate it with your credentials:
+   
+   ```env
+   PORT=3007
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/travel-planner
+   JWT_SECRET=your_long_random_secret_here
+   JWT_EXPIRES_IN=15m
+   REFRESH_TOKEN_EXPIRES_IN=7d
+   NODE_ENV=development
+   
+   # Agent Configuration (Groq API is required for itinerary generation)
+   AGENT_PROVIDER=groq
+   GROQ_API_KEY=gsk_your_groq_api_key_here
+   GROQ_MODEL=llama-3.3-70b-versatile
+   
+   # Flight Search API (Duffel - Optional, falls back to mock data if omitted or invalid)
+   DUFFEL_KEY=duffel_test_your_token_here
+   USD_TO_INR_RATE=85
+   ```
+
+4. **Seed the Database:**
+   The backend relies on seeded database documents for destination rules and hotel listings. Run the following scripts:
+   
+   * **Seed Location Metadata:** Seeds regional rules, airports, and transport limits.
+     ```bash
+     npm run seed
+     ```
+   * **Seed Hotel Listings:** Uses the LLM to generate 6 realistic (but fictional) hotels for each major destination. *(Requires `GROQ_API_KEY` to be set in `.env`)*
+     ```bash
+     npm run seed-hotels
+     ```
+
+5. **Start the Backend Server:**
+   * **For Development (with auto-reload):**
+     ```bash
+     npm run dev
+     ```
+   * **For Production:**
+     ```bash
+     npm run start
+     ```
+   The backend will start running at `http://localhost:3007` (or the port defined in `.env`).
+
+---
+
+### 2. Frontend Setup
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd ../frontend
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure the API Endpoint:**
+   Open the file [frontend/src/AppConfig.js](file:///Users/vpatil/Desktop/Workspace/ai-travel-planner/frontend/src/AppConfig.js) and ensure that `baseUrl` points to your running backend port (default: `http://localhost:3007`):
+   ```javascript
+   const AppConfig = {
+       "baseUrl": "http://localhost:3007",
+       "AppVersion": "1.06 (dev)"
+   }
+   module.exports = AppConfig
+   ```
+
+4. **Run the React App:**
+   ```bash
+   npm start
+   ```
+   This compiles the React app and opens it in your default browser at `http://localhost:3000`.
+
+---
+
+## 🧪 Verification & Testing
+
+To verify the backend logic and travel itinerary evaluations, run the test suite:
+
+1. Ensure the backend dependencies are installed and `.env` is configured.
+2. In the `backend` directory, run:
+   ```bash
+   npm run test:evals
+   ```
+   This will execute the Jest integration and evaluation tests defined in `tests/evals/travel-evals.test.js`.
